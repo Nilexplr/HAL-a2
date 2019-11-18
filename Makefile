@@ -8,7 +8,7 @@ PROJECT_NAME	=	hal
 all: $(PROJECT_NAME)
 
 $(PROJECT_NAME):
-	stack install --local-bin-path . --exec 'mv hal-exe hal'
+	stack install --local-bin-path . --exec 'mv HAL-a2-exe hal'
 
 tests_run:
 	stack test
@@ -18,6 +18,7 @@ tests_run_coverage:
 
 clean:
 	rm -f $(PROJECT_NAME)
+	stack clean
 
 fclean: clean
 
