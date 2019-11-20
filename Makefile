@@ -14,7 +14,7 @@ tests_run:
 	stack test
 
 tests_run_coverage:
-	stack test --coverage
+	stack test --coverage --allow-different-user
 
 clean:
 	rm -f $(PROJECT_NAME)
