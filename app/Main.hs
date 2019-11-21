@@ -1,6 +1,7 @@
 module Main where
 
-import Lib
+import Tokenize
+
 
 main :: IO ()
-main = someFunc
+main = putStr $ cleanString "toto"
