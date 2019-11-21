@@ -1,6 +1,8 @@
 module Tokenize
     ( stringToToken
     , cleanString
+    , Op(..)
+    , Token(..)
     )
     where
 
