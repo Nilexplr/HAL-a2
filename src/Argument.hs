@@ -40,17 +40,51 @@ handleArgument args = case parseArgument args of
                     Left    (Version)   -> do programVersion ; return $ Left Version
                     Left    (_)         -> do programInvalidArgs ; return $ Left Invalid
 
+
+{-
+Check if interactive flag is on
+-}
+isInteractive :: [String] -> Bool
+isInteractive [] = False
+isInteractive ("-i":xs) = True 
+isInteractive (x:xs) = isInteractive xs
+
+{-
+Check if there is an invalid arguments
+-}
+isFlag :: [String] -> Bool
+isFlag [] = True
+isFlag (x:xs)   | x == "-i"     = isFlag xs
+                | x !! 0 == '-' = False
+                | otherwise     = isFlag xs
+
+{-
+Delete Flag from argument list
+-}
+deleteArgumentFlag :: [String] -> [String]
+deleteArgumentFlag [] = []
+deleteArgumentFlag ("-i":xs) = deleteArgumentFlag xs
+deleteArgumentFlag (x:xs) = x : deleteArgumentFlag xs
+
+{-
+Return a String of file paths if no invalid argument detected
+-}
+getFiles :: [String] -> Maybe [String]
+getFiles [] = Just []
+getFiles x = case isFlag $ deleteArgumentFlag $ x of
+    True -> Just $ deleteArgumentFlag $ x
+    False -> Nothing
 {-
 Return the parsed argument
 -}
 parseArgument :: [String] -> Either ArgumentType Options
-parseArgument []      = Right Options { pathFile = [], interactive = True }
-parseArgument ["-i"]      = Right Options { pathFile = [], interactive = True }
-parseArgument ["--help"]    = Left  Helper
-parseArgument ["--version"] = Left  Version
--- TODO : handling file
--- parseArgument x@[f:fs]      = Right Options { pathFile = x, interactive = True }
-parseArgument _             = Left  Invalid
+parseArgument []                = Right Options { pathFile = [], interactive = True }
+parseArgument ["-i"]            = Right Options { pathFile = [], interactive = True }
+parseArgument ["--help"]        = Left  Helper
+parseArgument ["--version"]     = Left  Version
+parseArgument x                 = case getFiles x of
+                Just  a     -> Right Options { pathFile = a, interactive = isInteractive x }
+                Nothing     -> Left Invalid
 
 {-
 Display the usage
