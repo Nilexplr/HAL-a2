@@ -59,11 +59,13 @@ isFlag (x:xs)   | x == "-i"     = isFlag xs
                 | otherwise     = isFlag xs
 
 {-
+Delete Flag from argument list
 -}
 deleteArgumentFlag :: [String] -> [String]
 deleteArgumentFlag [] = []
 deleteArgumentFlag ("-i":xs) = deleteArgumentFlag xs
 deleteArgumentFlag (x:xs) = x : deleteArgumentFlag xs
+
 {-
 Return a String of file paths if no invalid argument detected
 -}
