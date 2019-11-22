@@ -1,6 +1,7 @@
 module Tokenize
     ( stringToToken
     , cleanString
+    , reverseList
     , Op(..)
     , Token(..)
     )
@@ -35,6 +36,10 @@ isSpeSpace :: Char -> Bool
 isSpeSpace ')' = True
 isSpeSpace x = isSpace x 
 
+reverseList :: [a] -> [a]
+reverseList [] = []
+reverseList (x:xs) = reverseList xs ++ [x]
+
 stringToToken :: String -> [Token]
 stringToToken [] = []
 stringToToken s@(x:xs)  | x == '(' = TokenOpen : stringToToken xs 
@@ -42,7 +47,8 @@ stringToToken s@(x:xs)  | x == '(' = TokenOpen : stringToToken xs
                         | x == '+' = TokenOp Plus : stringToToken xs 
                         | x == '-' = TokenOp Minus : stringToToken xs 
                         | x == '*' = TokenOp Time : stringToToken xs 
-                        | x == '<' = TokenOp Inf : stringToToken xs 
+                        | x == '<' = TokenOp Inf : stringToToken xs
+                        | x == '\'' = Word "quote" : stringToToken xs 
                         | isAlpha x = Word word : stringToToken restchar
                         | isSpace x = stringToToken xs
                         | x == '\n' = stringToToken xs
