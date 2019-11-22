@@ -22,6 +22,6 @@ main = do
         Right   (opt)       -> do
                 if interactive opt == True
                     then handle onAbort launchPrompt -- TODO : eval function should be put here
-                    else return ()                   --TODO : eval function should be put here
+                    else displayEval $ pathFile opt  -- TODO : eval function should be put here
         Left    (Invalid)   -> exitWith $ ExitFailure 84
         _                   -> exitWith ExitSuccess
