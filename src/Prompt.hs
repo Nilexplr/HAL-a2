@@ -12,12 +12,14 @@ import Control.Exception
 import System.Exit
 import Data.Char
 import Control.Monad
+import Eval
 
-displayEval :: [String] -> IO()
-displayEval [] = return ()
+displayEval :: AccessMemory -> IO()
+displayEval _ = putStr "In Progress\n"
 
-launchPrompt :: IO()
-launchPrompt = forever $ do
+
+launchPrompt :: AccessMemory -> IO()
+launchPrompt _ = forever $ do
         putStr "> " >> hFlush stdout
         out <- getLine
         catch (putStrLn $ out) handler -- eval function should be put here

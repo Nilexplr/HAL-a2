@@ -22,7 +22,7 @@ main = do
     case args of
         Right   (opt)       -> do
                 if interactive opt == True
-                    then handle onAbort $ launchPrompt $ evalFiles $ pathFile opt -- TODO : eval function should be put here
-                    else displayEval $ evalFiles $ pathFile opt  -- TODO : eval function should be put here
+                    then handle onAbort $ launchPrompt $ evalFiles $ pathFile opt
+                    else displayEval $ evalFiles $ pathFile opt
         Left    (Invalid)   -> exitWith $ ExitFailure 84
         _                   -> exitWith ExitSuccess
