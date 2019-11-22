@@ -21,7 +21,7 @@ launchPrompt = forever $ do
         out <- getLine
         if null out
             then return ()
-            else catch (putStrLn $ out) handler
+            else catch (putStrLn $ out) handler -- eval function should be put here
                 where
                     handler :: SomeException -> IO ()
                     handler ex = putStrLn $ "***ERROR : " ++ show ex

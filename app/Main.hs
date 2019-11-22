@@ -1,6 +1,6 @@
 module Main where
 
---import Argument
+import Argument
 import Prompt
 import System.Exit
 import System.Environment
@@ -16,16 +16,12 @@ onAbort e = do
 
 main :: IO ()
 main = do
-    args <- getArgs
+    argv <- getArgs
+    args <- handleArgument argv
     case args of
-        [] -> handle onAbort launchPrompt
-
--- main :: IO ()
--- main = do
---     argv <- getArgs
---     args <- handleArgument argv
---     case args of
---         Right   (opt)       -> do
---                 printCluster (imgCompressor (parseFile c, nbColors opt, convergenceLimit opt) [])
---         Left    (Invalid)   -> exitWith $ ExitFailure 84
---         _                   -> exitWith ExitSuccess
+        Right   (opt)       -> do
+                if interactive opt == True
+                    then handle onAbort launchPrompt -- TODO : eval function should be put here
+                    else return ()                   --TODO : eval function should be put here
+        Left    (Invalid)   -> exitWith $ ExitFailure 84
+        _                   -> exitWith ExitSuccess
