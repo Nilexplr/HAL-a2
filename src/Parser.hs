@@ -26,15 +26,15 @@ data OpExpr = AddExpr [Expr]
 --     deriving Show
 
 parseExpr :: Parser [Expr]
-parseExpr _ -> Nothing
+parseExpr _ = Nothing
 
 findOp :: [TokenOp] -> [OpExpr] -> Parser OpExpr
-findOp [] _ _ -> Nothing
-findOp _ [] _ -> Nothing
-findOp _ _ [] -> Nothing
+findOp [] _ _ = Nothing
+findOp _ [] _ = Nothing
+findOp _ _ [] = Nothing
 findOp (x:xs) (y:ys) s@(z:zs)   | z == x = just(y, zs)
                                 | z /= x = findOp xs ys s
-findOp _ _ _ -> Nothing
+findOp _ _ _ = Nothing
 
 parseOpExpr :: Parser OpExpr
 parseOpExpr [] = Nothing
