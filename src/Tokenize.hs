@@ -12,6 +12,8 @@ import Data.Char
 data Op = Plus
         | Minus
         | Time
+        | Div
+        | Mod
         | Inf
         deriving(Show, Eq)
 
@@ -48,12 +50,17 @@ stringToToken s@(x:xs)  | x == '(' = TokenOpen : stringToToken xs
                         | x == '-' = TokenOp Minus : stringToToken xs 
                         | x == '*' = TokenOp Time : stringToToken xs 
                         | x == '<' = TokenOp Inf : stringToToken xs
+                        | x == '/' = TokenOp Div : stringToToken xs
                         | x == '\'' = Word "quote" : stringToToken xs 
-                        | isAlpha x = Word word : stringToToken restchar
+                        | isAlpha x = isOp word : stringToToken restchar
                         | isSpace x = stringToToken xs
                         | x == '\n' = stringToToken xs
                         | isDigit x = Number (read num :: Int) : stringToToken restnum
                             where
                                 (word, restchar) = break isSpeSpace s
                                 (num, restnum) = break (not . isDigit) s
+                                isOp :: String -> Token
+                                isOp "div" = TokenOp Div
+                                isOp "mod" = TokenOp Mod
+                                isOp w = Word w 
 stringToToken _ = error "Invalid character"

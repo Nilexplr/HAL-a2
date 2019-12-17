@@ -10,13 +10,9 @@ type Parser a = [Token] -> Maybe(a, [Token])
 
 data Expr = KeyWord String
             | Function Expr
-
-data OpExpr = AddExpr [Expr]
-            | SubExpr [Expr]
-            | DivExpr [Expr]
-            | MulExpr [Expr]
-            | ModExpr [Expr]
-    deriving Show
+            | Calcul Op [Expr]
+            | Val Int
+            deriving Show
 
 -- data Op = ADD
 --         | SUB
@@ -26,17 +22,30 @@ data OpExpr = AddExpr [Expr]
 --     deriving Show
 
 parseExpr :: Parser [Expr]
+parseExpr s@(x:xs) = case x of
+    TokenOpen -> parseExpr xs
+    TokenClose -> Just([], xs)
+    TokenOp op -> case parseExpr xs of
+        Just (a, as) -> case parseOp s of
+            Just (b, bs) -> Just ([b], bs)
+        _ -> Nothing
+    Number i -> case parseExpr xs of
+        Just (a, as) -> Just (Val i : a, as)
+        _ -> Nothing
+    _ -> Nothing
 parseExpr _ = Nothing
 
-findOp :: [TokenOp] -> [OpExpr] -> Parser OpExpr
-findOp [] _ _ = Nothing
-findOp _ [] _ = Nothing
-findOp _ _ [] = Nothing
-findOp (x:xs) (y:ys) s@(z:zs)   | z == x = just(y, zs)
-                                | z /= x = findOp xs ys s
-findOp _ _ _ = Nothing
+{- findOp :: [Token] -> [OpExpr] -> Parser OpExpr
+ findOp [] _ _ = Nothing
+ findOp _ [] _ = Nothing
+ findOp _ _ [] = Nothing
+ findOp (x:xs) (y:ys) s@(z:zs)   | z == x = Just(y, zs)
+                                 | z /= x = findOp xs ys s
+ findOp _ _ _ = Nothing -}
 
-parseOpExpr :: Parser OpExpr
-parseOpExpr [] = Nothing
-parseOpExpr s@(x:xs)
-
+parseOp :: Parser Expr
+parseOp s@(x:xs) = case x of
+    TokenOp op -> case parseExpr xs of
+        Just(y, ys) -> Just(Calcul op y, ys)
+    _ -> Nothing
+parseOp _ = Nothing
