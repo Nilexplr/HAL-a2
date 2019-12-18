@@ -16,6 +16,10 @@ data Memory = Memory { name :: String, variable :: [Expr], scope :: Expr}
 -- Memory that the user can use to save define variable or instructions
 data AccessMemory = AccessMemory { access :: [Memory] }
 
+data ReturnType = ReturnInt Int 
+                | ReturnBool Bool 
+                | ReturnString String
+                | ReturnList [ReturnType]
 
 
 displayExpr :: Expr -> String
@@ -56,7 +60,7 @@ TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is 
         And to stock define data
 -}
 evalExpr :: Expr -> String
-evalExpr (Val nb)             =  show nb
+evalExpr (Val nb)               =  show nb
 --
 evalExpr (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
                                 | (evalArithmetic $ x !! 0) < (evalArithmetic $ x !! 1)   = "#t"
@@ -70,7 +74,8 @@ evalExpr (Symbol "quote" x)     | length x /= 1     = error "Invalid argument fo
 evalExpr (Symbol "'" x)         | length x /= 1     = error "Invalid argument for quote"
                                 | otherwise         = displayExpr $ x !! 0
 --
-
+evalExpr (Symbol "cons" x)      | length x /= 2     = error "Invalid argument for quote"
+                                | otherwise         = displayExpr $ x !! 0
 --
 evalExpr _                      = error "Impossible to evaluate expression"
 
