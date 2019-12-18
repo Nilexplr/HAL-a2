@@ -24,7 +24,7 @@ launchPrompt :: AccessMemory -> IO()
 launchPrompt _ = forever $ do
         putStr "> " >> hFlush stdout
         out <- getLine
-        catch (putStrLn $  show $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
+        catch (putStrLn $ evalExprString $ (parseExpr $ stringToToken $ out) !! 0) handler
             where
                 handler :: SomeException -> IO ()
                 handler ex = putStrLn $ "*** ERROR : " ++ show ex
