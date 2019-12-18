@@ -19,7 +19,8 @@ data AccessMemory = AccessMemory { access :: [Memory] }
 
 {-
 TODO:   Create a Type data to merge evalExpr to return differents kind of
-        data Types (bool, int, string)        
+        data Types (bool, int, string)
+TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is detect
 -}
 evalExprInt :: Expr -> Int
 evalExprInt (Val nb)            =  nb
@@ -47,11 +48,24 @@ Eval an Expression
 evalExprString :: Expr -> String
 evalExprString (Val nb)             =  show nb
 --
-evalExprString (Calcul Inf x)       | length x /= 2 = error "Impossible to compare more than 2 numbers"
+evalExprString (Calcul Inf x)       | length x /= 2     = error "Impossible to compare more than 2 numbers"
                                     | (evalExprInt $ x !! 0) < (evalExprInt $ x !! 1)   = "#t"
                                     | otherwise                                         = "#f"
 --
 evalExprString expr@(Calcul _ _)    =  show $ evalExprInt expr
+--
+evalExprString (Symbol "quote" x)   | length x /= 1     = error "Invalid agrument for quote"
+                                    | otherwise         = displayExpr $ x !! 0
+                                        where
+                                            displayExpr :: Expr -> String
+                                            displayExpr (Val nb)            = show nb
+                                            displayExpr (List exprs)        = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
+                                            displayExpr (Calcul op exprs)   = "(" ++ ")"
+                                            displayExpr (Symbol name exprs)   = "(" ++ name ++ concat [" " ++ displayExpr x | x <- exprs] ++ ")"
+--
+
+--
+evalExprString _                    = error "Impossible to evaluate expression"
 
 
 {-
