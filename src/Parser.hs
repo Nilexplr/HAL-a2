@@ -1,6 +1,7 @@
 module Parser 
-    ( Expr
-
+    ( Expr(..)
+    , parseExpr
+    , parseValue
     )
     where
 
@@ -21,31 +22,29 @@ data Expr = KeyWord String
 --         | MOD
 --     deriving Show
 
-parseExpr :: Parser [Expr]
-parseExpr s@(x:xs) = case x of
-    TokenOpen -> parseExpr xs
-    TokenClose -> Just([], xs)
-    TokenOp op -> case parseExpr xs of
-        Just (a, as) -> case parseOp s of
-            Just (b, bs) -> Just ([b], bs)
-        _ -> Nothing
-    Number i -> case parseExpr xs of
-        Just (a, as) -> Just (Val i : a, as)
-        _ -> Nothing
-    _ -> Nothing
-parseExpr _ = Nothing
+parseValue :: Parser Expr
+parseValue (Number n:xs) = Just (Val n, xs)
+--
+parseValue (TokenOpen : xs) = case parseValue xs of
+    Just (expr, (TokenClose : ys))  -> Just (expr, ys)
+    Just _                          -> error "Parse Value never Close"
+    Nothing                         -> error "Parse Value return nothing wher token open is detected"
+--
+parseValue (TokenOp op :xs) = Just (Calcul op recursive, rest)
+                where
+                    (recursive, rest) = parseExprs [] xs
+--
+parseValue _ = error "Token not recognize"
 
-{- findOp :: [Token] -> [OpExpr] -> Parser OpExpr
- findOp [] _ _ = Nothing
- findOp _ [] _ = Nothing
- findOp _ _ [] = Nothing
- findOp (x:xs) (y:ys) s@(z:zs)   | z == x = Just(y, zs)
-                                 | z /= x = findOp xs ys s
- findOp _ _ _ = Nothing -}
+parseExpr :: [Token] -> [Expr]
+parseExpr tokens = case parseExprs [] tokens of
+        (result, []) -> result
+        _           -> error "bad parsing"
 
-parseOp :: Parser Expr
-parseOp s@(x:xs) = case x of
-    TokenOp op -> case parseExpr xs of
-        Just(y, ys) -> Just(Calcul op y, ys)
-    _ -> Nothing
-parseOp _ = Nothing
+parseExprs :: [Expr] -> [Token] -> ([Expr], [Token])
+parseExprs list tokens =
+  case parseValue tokens of
+    Just (expr, []) -> (list ++ [expr], [])
+    Just (expr, tokens@(TokenClose : xs)) -> (list ++ [expr], tokens)
+    Just (expr, x)  -> parseExprs (list ++ [expr]) x
+    _               -> error "Error during the separation of expretions"

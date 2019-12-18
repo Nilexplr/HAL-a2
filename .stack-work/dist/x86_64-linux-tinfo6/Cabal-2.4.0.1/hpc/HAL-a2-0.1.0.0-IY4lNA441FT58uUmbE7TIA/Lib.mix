@@ -1,0 +1,1 @@
+Mix "src/Lib.hs" 2019-11-18 14:26:44.214207845 UTC 261238078 8 [(6:21-6:30,ExpBox False),(6:12-6:30,ExpBox False),(6:1-6:30,TopLevelBox ["someFunc"])]

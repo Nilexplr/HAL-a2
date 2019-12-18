@@ -4,7 +4,6 @@ module Prompt
     )
     where
 
-import Tokenize
 import System.IO
 import Text.Printf
 import Prelude hiding (catch)
@@ -12,6 +11,9 @@ import Control.Exception
 import System.Exit
 import Data.Char
 import Control.Monad
+
+import Parser
+import Tokenize
 import Eval
 
 displayEval :: AccessMemory -> IO()
@@ -22,7 +24,7 @@ launchPrompt :: AccessMemory -> IO()
 launchPrompt _ = forever $ do
         putStr "> " >> hFlush stdout
         out <- getLine
-        catch (putStrLn $ out) handler -- eval function should be put here
+        catch (putStrLn $  show $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
             where
                 handler :: SomeException -> IO ()
                 handler ex = putStrLn $ "*** ERROR : " ++ show ex

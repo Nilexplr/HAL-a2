@@ -1,0 +1,20 @@
+/app/package.yaml:
+  hash: 410490053b48b0bebc135eb239d71e3fae22969feb97f76f4d32286ebb48d2b1
+  size: 1163
+  modtime: 1574087204
+/app/README.md:
+  hash: e5a5b967b500b2e61a9fa715133d11d79287901a7e2c5a3013867aff04c11dfa
+  size: 9
+  modtime: 1574087204
+/app/ChangeLog.md:
+  hash: 2c7a26d8dc3b7c1938043c676321c3cfabb17855e933d054fd0d3215a276b9b8
+  size: 46
+  modtime: 1574087204
+/app/src/Lib.hs:
+  hash: 11d6d255cb397fa45980eb516ea685146565d9de2108c4eea356ea41db8364be
+  size: 88
+  modtime: 1574087204
+/app/HAL-a2.cabal:
+  hash: 2cbbbd115f78476a7c53f7ab73d7128f7e7d5da585e297044895a619b9b0211b
+  size: 1476
+  modtime: 1574087204
