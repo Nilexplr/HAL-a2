@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e08a0fd6599683efd134908c7ffdf8aeb18e30f149a56d8c3194c4d8e190fb5d
+-- hash: 5bf392abec0b1cf90ebb3f27748544e10985e6088e54406f91525ec7ea4c2f32
 
 name:           HAL-a2
 version:        0.1.0.0
@@ -27,7 +27,11 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Argument
+      Eval
+      Parser
+      Prompt
+      Tokenize
   other-modules:
       Paths_HAL_a2
   hs-source-dirs:
