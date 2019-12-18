@@ -17,6 +17,10 @@ data Memory = Memory { name :: String, variable :: [Expr], scope :: Expr}
 data AccessMemory = AccessMemory { access :: [Memory] }
 
 
+{-
+TODO:   Create a Type data to merge evalExpr to return differents kind of
+        data Types (bool, int, string)        
+-}
 evalExprInt :: Expr -> Int
 evalExprInt (Val nb)            =  nb
 evalExprInt (Calcul Plus x)     =  sum       [evalExprInt y | y <- x]
@@ -39,7 +43,6 @@ evalExprInt (Calcul Mod x)      | length x /= 2 = error "Impossible to Modulo mo
 
 {-
 Eval an Expression
-TODO: Transform int to string for advanced expression
 -}
 evalExprString :: Expr -> String
 evalExprString (Val nb)             =  show nb
