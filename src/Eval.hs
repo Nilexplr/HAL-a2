@@ -2,8 +2,8 @@ module Eval
     ( AccessMemory
     , Memory
     , evalFiles
-    , evalExprString
-    , evalExprInt
+    , evalExpr
+    , evalArithmetic
     )
     where
 
@@ -17,55 +17,60 @@ data Memory = Memory { name :: String, variable :: [Expr], scope :: Expr}
 data AccessMemory = AccessMemory { access :: [Memory] }
 
 
+
+displayExpr :: Expr -> String
+displayExpr (Val nb)            = show nb
+displayExpr (List exprs)        = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
+displayExpr (Calcul op exprs)   = "(" ++ show op ++ concat [" " ++ displayExpr x | x <- exprs] ++  ")"
+displayExpr (Symbol "'" exprs)  = "(" ++ "'" ++ (displayExpr $ head exprs) ++concat [" " ++ displayExpr x | x <- tail exprs] ++ ")"
+displayExpr (Symbol name exprs) = "(" ++ name ++ concat [" " ++ displayExpr x | x <- exprs] ++ ")"
+
 {-
 TODO:   Create a Type data to merge evalExpr to return differents kind of
         data Types (bool, int, string)
 TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is detect
 -}
-evalExprInt :: Expr -> Int
-evalExprInt (Val nb)            =  nb
-evalExprInt (Calcul Plus x)     =  sum       [evalExprInt y | y <- x]
-evalExprInt (Calcul Minus x)    =  soustract [evalExprInt y | y <- x]
+evalArithmetic :: Expr -> Int
+evalArithmetic (Val nb)            =  nb
+evalArithmetic (Calcul Plus x)     =  sum       [evalArithmetic y | y <- x]
+evalArithmetic (Calcul Minus x)    =  soustract [evalArithmetic y | y <- x]
                                     where
                                         soustract :: [Int] -> Int
                                         soustract (x:[]) = x
                                         soustract (x:(y:rest)) = soustract (x - y:rest)
 --
-evalExprInt (Calcul Time x)     =  product   [evalExprInt y | y <- x]
-evalExprInt (Calcul Div x)      =  divide    [evalExprInt y | y <- x]
+evalArithmetic (Calcul Time x)     =  product   [evalArithmetic y | y <- x]
+evalArithmetic (Calcul Div x)      =  divide    [evalArithmetic y | y <- x]
                                     where
                                         divide :: [Int] -> Int
                                         divide (x:[]) = x
                                         divide (x:(y:rest)) = divide (quot x y:rest)
 --
-evalExprInt (Calcul Mod x)      | length x /= 2 = error "Impossible to Modulo more than 2 numbers"
-                                | otherwise     = (evalExprInt $ x !! 0) `mod` (evalExprInt $ x !! 1)
+evalArithmetic (Calcul Mod x)      | length x /= 2 = error "Impossible to Modulo more than 2 numbers"
+                                   | otherwise     = (evalArithmetic $ x !! 0) `mod` (evalArithmetic $ x !! 1)
                             
 
 {-
 Eval an Expression
 -}
-evalExprString :: Expr -> String
-evalExprString (Val nb)             =  show nb
+evalExpr :: Expr -> String
+evalExpr (Val nb)             =  show nb
 --
-evalExprString (Calcul Inf x)       | length x /= 2     = error "Impossible to compare more than 2 numbers"
-                                    | (evalExprInt $ x !! 0) < (evalExprInt $ x !! 1)   = "#t"
-                                    | otherwise                                         = "#f"
+evalExpr (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
+                                | (evalArithmetic $ x !! 0) < (evalArithmetic $ x !! 1)   = "#t"
+                                | otherwise                                               = "#f"
 --
-evalExprString expr@(Calcul _ _)    =  show $ evalExprInt expr
+evalExpr expr@(Calcul _ _)    =  show $ evalArithmetic expr
 --
-evalExprString (Symbol "quote" x)   | length x /= 1     = error "Invalid agrument for quote"
+evalExpr (Symbol "quote" x)         | length x /= 1     = error "Invalid argument for quote"
                                     | otherwise         = displayExpr $ x !! 0
-                                        where
-                                            displayExpr :: Expr -> String
-                                            displayExpr (Val nb)            = show nb
-                                            displayExpr (List exprs)        = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
-                                            displayExpr (Calcul op exprs)   = "(" ++ ")"
-                                            displayExpr (Symbol name exprs)   = "(" ++ name ++ concat [" " ++ displayExpr x | x <- exprs] ++ ")"
+--
+evalExpr (Symbol "'" x)             | length x /= 1     = error "Invalid argument for quote"
+                                    | otherwise         = displayExpr $ x !! 0
 --
 
 --
-evalExprString _                    = error "Impossible to evaluate expression"
+evalExpr _                    = error "Impossible to evaluate expression"
 
 
 {-
