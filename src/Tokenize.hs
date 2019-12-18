@@ -3,6 +3,7 @@ module Tokenize
     , cleanString
     , reverseList
     , Op(..)
+    , drawOp
     , Token(..)
     )
     where
@@ -16,6 +17,14 @@ data Op = Plus
         | Mod
         | Inf
         deriving(Show, Eq)
+
+drawOp :: Op -> String
+drawOp Plus = "+"
+drawOp Minus = "-"
+drawOp Time = "*"
+drawOp Div = "div"
+drawOp Mod = "mod"
+drawOp Inf = "<"
 
 data Token = Word String
             | Number Int
@@ -52,7 +61,7 @@ stringToToken s@(x:xs)  | x == '(' = TokenOpen : stringToToken xs
                         | x == '*' = TokenOp Time : stringToToken xs 
                         | x == '<' = TokenOp Inf : stringToToken xs
                         | x == '/' = TokenOp Div : stringToToken xs
-                        | x == '\'' = Word "quote" : stringToToken xs 
+                        | x == '\'' = Word "'" : stringToToken xs 
                         | isAlpha x = isOp word : stringToToken restchar
                         | isSpace x = stringToToken xs
                         | x == '\n' = stringToToken xs

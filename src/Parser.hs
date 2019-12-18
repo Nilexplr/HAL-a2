@@ -10,6 +10,7 @@ type Parser a = [Token] -> Maybe(a, [Token])
 
 
 symbols =   [ "quote"
+            , "'"
             , "cons"
             , "car"
             , "cdr"
@@ -38,7 +39,6 @@ parseValue (Number n:xs) = Just (Val n, xs)
 -- Launch a parsing instance inside a parenthesis
 parseValue (TokenOpen : xs) = case parseValue xs of
     Just (expr, (TokenClose : ys))  -> Just (expr, ys)
-    -- Just _                          -> error "Parsing error with end of parenthesis"
     Just (expr, ys)               -> Just (List ([expr] ++ recursive), tail rest)
         where
             (recursive, rest) = parseExprs [] ys
