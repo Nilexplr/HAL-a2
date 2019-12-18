@@ -36,6 +36,7 @@ cleanString (x:xs) = x : cleanString xs
 
 isSpeSpace :: Char -> Bool
 isSpeSpace ')' = True
+isSpeSpace '\'' = True
 isSpeSpace x = isSpace x 
 
 reverseList :: [a] -> [a]
