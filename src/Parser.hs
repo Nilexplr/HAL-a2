@@ -39,7 +39,7 @@ parseValue (Number n:xs) = Just (Val n, xs)
 -- Launch a parsing instance inside a parenthesis
 parseValue (TokenOpen : xs) = case parseValue xs of
     Just (expr, (TokenClose : ys))  -> Just (expr, ys)
-    Just (expr, ys)               -> Just (List ([expr] ++ recursive), tail rest)
+    Just (expr, ys)                 -> Just (List ([expr] ++ recursive), tail rest)
         where
             (recursive, rest) = parseExprs [] ys
     Nothing                         -> error "Parse Value return nothing wher token open is detected"

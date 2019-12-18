@@ -16,6 +16,10 @@ data Memory = Memory { name :: String, variable :: [Expr], scope :: Expr}
 -- Memory that the user can use to save define variable or instructions
 data AccessMemory = AccessMemory { access :: [Memory] }
 
+data ReturnType = ReturnInt Int 
+                | ReturnBool Bool 
+                | ReturnString String
+                | ReturnList [ReturnType]
 
 
 displayExpr :: Expr -> String
@@ -28,7 +32,6 @@ displayExpr (Symbol name exprs) = "(" ++ name ++ concat [" " ++ displayExpr x | 
 {-
 TODO:   Create a Type data to merge evalExpr to return differents kind of
         data Types (bool, int, string)
-TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is detect
 -}
 evalArithmetic :: Expr -> Int
 evalArithmetic (Val nb)            =  nb
@@ -52,25 +55,29 @@ evalArithmetic (Calcul Mod x)      | length x /= 2 = error "Impossible to Modulo
 
 {-
 Eval an Expression
+
+TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is detect
+        And to stock define data
 -}
 evalExpr :: Expr -> String
-evalExpr (Val nb)             =  show nb
+evalExpr (Val nb)               =  show nb
 --
 evalExpr (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
                                 | (evalArithmetic $ x !! 0) < (evalArithmetic $ x !! 1)   = "#t"
                                 | otherwise                                               = "#f"
 --
-evalExpr expr@(Calcul _ _)    =  show $ evalArithmetic expr
+evalExpr expr@(Calcul _ _)      =  show $ evalArithmetic expr
 --
-evalExpr (Symbol "quote" x)         | length x /= 1     = error "Invalid argument for quote"
-                                    | otherwise         = displayExpr $ x !! 0
+evalExpr (Symbol "quote" x)     | length x /= 1     = error "Invalid argument for quote"
+                                | otherwise         = displayExpr $ x !! 0
 --
-evalExpr (Symbol "'" x)             | length x /= 1     = error "Invalid argument for quote"
-                                    | otherwise         = displayExpr $ x !! 0
+evalExpr (Symbol "'" x)         | length x /= 1     = error "Invalid argument for quote"
+                                | otherwise         = displayExpr $ x !! 0
 --
-
+evalExpr (Symbol "cons" x)      | length x /= 2     = error "Invalid argument for quote"
+                                | otherwise         = displayExpr $ x !! 0
 --
-evalExpr _                    = error "Impossible to evaluate expression"
+evalExpr _                      = error "Impossible to evaluate expression"
 
 
 {-
