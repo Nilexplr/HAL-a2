@@ -52,13 +52,13 @@ displayExpr (Symbol "'" exprs)          = "(" ++ "'" ++ (displayExpr $ head expr
 displayExpr (Symbol name exprs)         = "(" ++ name ++ concat [" " ++ displayExpr x | x <- exprs] ++ ")"
 
 {-
-TODO:   Create a Type data to merge evalExpr to return differents kind of
-        data Types (bool, int, string)
+Eval an arithmetic expression
 -}
 evalArithmetic :: Expr -> Int
 evalArithmetic (Val nb)            =  nb
 evalArithmetic (Calcul Plus x)     =  sum       [evalArithmetic y | y <- x]
-evalArithmetic (Calcul Minus x)    =  soustract [evalArithmetic y | y <- x]
+evalArithmetic (Calcul Minus x)    |  length x == 1 = - (evalArithmetic $ x !! 0)
+evalArithmetic (Calcul Minus x)    | otherwise = soustract [evalArithmetic y | y <- x]
                                     where
                                         soustract :: [Int] -> Int
                                         soustract (x:[]) = x
