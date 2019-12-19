@@ -21,6 +21,7 @@ displayExpr :: Expr -> String
 displayExpr (Val nb)                    = show nb
 displayExpr (KeyWord x)                 = x
 displayExpr (List [])                   = "()"
+displayExpr (CellList [])               = "()"
 displayExpr (List exprs@(x:xs))         = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
 --
 displayExpr (CellList exprs@(x:xs))     = case exprs !! 0 of
@@ -48,7 +49,7 @@ displayExpr (CellList exprs@(x:xs))     = case exprs !! 0 of
 --
 displayExpr (Calcul op exprs)           = "(" ++ show op ++ concat [" " ++ displayExpr x | x <- exprs] ++  ")"
 displayExpr (Symbol "'" exprs)          = "(" ++ "'" ++ (displayExpr $ head exprs) ++concat [" " ++ displayExpr x | x <- tail exprs] ++ ")"
-displayExpr (Symbol name exprs)         = "(" ++ name ++ concat [" head" ++ displayExpr x | x <- exprs] ++ ")"
+displayExpr (Symbol name exprs)         = "(" ++ name ++ concat [" " ++ displayExpr x | x <- exprs] ++ ")"
 
 {-
 TODO:   Create a Type data to merge evalExpr to return differents kind of
@@ -108,8 +109,8 @@ evalExpr (Symbol "car" x)       | length x /= 1     = error "Invalid argument fo
 --
 evalExpr (Symbol "cdr" x)       | length x /= 1     = error "Invalid argument for cdr"
                                 | otherwise         = case evalExpr $ head $ x of
-                                    CellList y      ->  List $ tail $ y
-                                    List y          ->  List $ tail $ y
+                                    CellList y      -> y !! 1
+                                    List y          -> List $ tail $ y 
 --
 evalExpr (Symbol "list" x)      | length x == 0     = error "Invalid argument for cdr"
                                 | otherwise         = List [evalExpr expr | expr <- x]
