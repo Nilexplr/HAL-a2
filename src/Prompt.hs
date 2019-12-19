@@ -23,8 +23,8 @@ displayEval :: AccessMemory -> IO()
 displayEval _ = putStrLn "In progress"--catch (putStrLn $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
 
 launchPrompt :: AccessMemory -> IO()
-launchPrompt _ = forever $ do
+launchPrompt x = forever $ do
         putStr "> " >> hFlush stdout
         out <- getLine
-        catch (putStrLn $ displayExpr $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
+        catch (putStrLn $ displayExpr $ (evalExpr x ((parseExpr $ stringToToken $ out) !! 0))) handler
                 
