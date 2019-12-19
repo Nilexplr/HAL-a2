@@ -26,14 +26,22 @@ displayExpr (List exprs@(x:xs))         = "(" ++ displayExpr (head exprs) ++ con
 displayExpr (CellList exprs@(x:xs))     = case exprs !! 0 of
         Val y       -> case (exprs !! 1) of
             List ys     ->  displayExpr $ List ([x] ++ ys)
+            CellList ys ->  displayExpr $ List ([x] ++ ys)
             Val  ys     ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             KeyWord ys  ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
         List y      -> case (exprs !! 1) of
-            List ys     ->  displayExpr $ List (y ++ ys)
+            List ys     ->  displayExpr $ List ([List y] ++ ys)
+            CellList ys ->  displayExpr $ List ([List y] ++ ys)
+            Val  ys     ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
+            KeyWord ys  ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
+        CellList y  -> case (exprs !! 1) of    
+            List ys     ->  displayExpr $ List ([List y] ++ ys)
+            CellList ys ->  displayExpr $ List ([List y] ++ ys)
             Val  ys     ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             KeyWord ys  ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
         KeyWord y   -> case (exprs !! 1) of
             List ys     ->  displayExpr $ List ([x] ++ ys)
+            CellList ys ->  displayExpr $ List ([x] ++ ys)
             Val  ys     ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             KeyWord ys  ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             
@@ -129,6 +137,9 @@ evalExpr (Symbol "atom?" x)     | length x /= 1     = error "Invalid argument fo
 evalExpr (Symbol "cond" x)      | length x == 0     = error "Invalid argument for cond"
                                 | otherwise         = case evalExpr $ head $ x of
                                     List (y:ys)     -> case evalExpr $ y of
+                                        KeyWord "#t"    -> evalExpr $ ys !! 0
+                                        _               -> evalExpr $ (Symbol "cond" (tail x))
+                                    CellList (y:ys) -> case evalExpr $ y of
                                         KeyWord "#t"    -> evalExpr $ ys !! 0
                                         _               -> evalExpr $ (Symbol "cond" (tail x))
                                     otherwise       -> error "Impossible to evaluate cond"
