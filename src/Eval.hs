@@ -19,28 +19,28 @@ data AccessMemory = AccessMemory { access :: [Memory] }
 
 displayExpr :: Expr -> String
 displayExpr (Val nb)                    = show nb
-displayExpr (KeyWord x)                    = x
+displayExpr (KeyWord x)                 = x
 displayExpr (List [])                   = "()"
 displayExpr (List exprs@(x:xs))         = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
 --
 displayExpr (CellList exprs@(x:xs))     = case exprs !! 0 of
         Val y       -> case (exprs !! 1) of
             List ys     ->  displayExpr $ List ([x] ++ ys)
-            Val  ys     -> "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
+            Val  ys     ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             KeyWord ys  ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
         List y      -> case (exprs !! 1) of
             List ys     ->  displayExpr $ List (y ++ ys)
-            Val  ys     -> "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
+            Val  ys     ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             KeyWord ys  ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
         KeyWord y   -> case (exprs !! 1) of
             List ys     ->  displayExpr $ List ([x] ++ ys)
-            Val  ys     -> "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
+            Val  ys     ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             KeyWord ys  ->  "(" ++ displayExpr x ++ " . " ++ displayExpr (exprs !! 1) ++ ")"
             
 --
 displayExpr (Calcul op exprs)           = "(" ++ show op ++ concat [" " ++ displayExpr x | x <- exprs] ++  ")"
 displayExpr (Symbol "'" exprs)          = "(" ++ "'" ++ (displayExpr $ head exprs) ++concat [" " ++ displayExpr x | x <- tail exprs] ++ ")"
-displayExpr (Symbol name exprs)         = "(" ++ name ++ concat [" " ++ displayExpr x | x <- exprs] ++ ")"
+displayExpr (Symbol name exprs)         = "(" ++ name ++ concat [" head" ++ displayExpr x | x <- exprs] ++ ")"
 
 {-
 TODO:   Create a Type data to merge evalExpr to return differents kind of
@@ -89,6 +89,20 @@ evalExpr (Symbol "'" x)         | length x /= 1     = error "Invalid argument fo
 --
 evalExpr (Symbol "cons" x)      | length x /= 2     = error "Invalid argument for cons"
                                 | otherwise         = CellList ((evalExpr $ x !! 0 ): [evalExpr $ x !! 1])
+--
+evalExpr (Symbol "car" x)       | length x /= 1     = error "Invalid argument for car"
+                                | otherwise         = case evalExpr $ head $ x of
+                                    CellList (y:_) ->  y
+                                    List (y:_)     ->  y
+
+--
+evalExpr (Symbol "cdr" x)       | length x /= 1     = error "Invalid argument for cdr"
+                                | otherwise         = case evalExpr $ head $ x of
+                                    CellList y      ->  List $ tail $ y
+                                    List y          ->  List $ tail $ y
+--
+evalExpr (Symbol "list" x)      | length x == 0     = error "Invalid argument for cdr"
+                                | otherwise         = List [evalExpr expr | expr <- x]
 --
 evalExpr _                      = error "Impossible to evaluate expression"
 

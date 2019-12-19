@@ -38,7 +38,6 @@ parseValue :: Parser Expr
 parseValue (Number n:xs)                    = Just (Val n, xs)
 --
 parseValue (TokenOpen : (TokenClose:xs))    = Just (List [], xs)
--- parseValue (x : (TokenClose:xs))    = Just ((parseExpr [x]) !! 0, xs)
 -- Launch a parsing instance inside a parenthesis
 parseValue (TokenOpen : xs)                 = case parseValue xs of
     Just (expr, (TokenClose : ys))  -> Just (expr, ys)
