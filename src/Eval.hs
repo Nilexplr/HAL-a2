@@ -74,6 +74,8 @@ TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is 
 -}
 evalExpr :: Expr -> Expr
 evalExpr (Val nb)               = Val nb
+evalExpr (KeyWord x)            = KeyWord x
+evalExpr (List x)               = List x
 --
 evalExpr (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
                                 | (evalArithmetic $ x !! 0) < (evalArithmetic $ x !! 1)   = KeyWord "#t"
@@ -103,6 +105,33 @@ evalExpr (Symbol "cdr" x)       | length x /= 1     = error "Invalid argument fo
 --
 evalExpr (Symbol "list" x)      | length x == 0     = error "Invalid argument for cdr"
                                 | otherwise         = List [evalExpr expr | expr <- x]
+--
+evalExpr (Symbol "eq?" x)       | length x /= 2     = error "Invalid argument for eq?"
+                                | otherwise         = case evalExpr $ head $ x of
+                                    List [] -> case evalExpr $ x !! 1 of
+                                        List [] -> KeyWord "#t"
+                                        _       -> KeyWord "#f"
+                                    Val a -> case evalExpr $ x !! 1 of
+                                        Val b   -> if a == b then KeyWord "#t" else KeyWord "#f"
+                                        _       -> KeyWord "#f"
+                                    KeyWord a -> case evalExpr $ x !! 1 of
+                                        KeyWord b   -> if a == b then KeyWord "#t" else KeyWord "#f"
+                                        _           -> KeyWord "#f"
+                                    _         -> KeyWord "#f"
+--
+evalExpr (Symbol "atom?" x)     | length x /= 1     = error "Invalid argument for atom?"
+                                | otherwise         = case evalExpr $ head $ x of
+                                    Val _           -> KeyWord "#t"
+                                    KeyWord _       -> KeyWord "#t"
+                                    List []         -> KeyWord "#t"
+                                    _               -> KeyWord "#f"
+--
+evalExpr (Symbol "cond" x)      | length x == 0     = error "Invalid argument for cond"
+                                | otherwise         = case evalExpr $ head $ x of
+                                    List (y:ys)     -> case evalExpr $ y of
+                                        KeyWord "#t"    -> evalExpr $ ys !! 0
+                                        _               -> evalExpr $ (Symbol "cond" (tail x))
+                                    otherwise       -> error "Impossible to evaluate cond"
 --
 evalExpr _                      = error "Impossible to evaluate expression"
 
