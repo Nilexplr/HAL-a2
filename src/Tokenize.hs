@@ -54,15 +54,15 @@ reverseList (x:xs) = reverseList xs ++ [x]
 
 stringToToken :: String -> [Token]
 stringToToken [] = []
-stringToToken s@(x:xs)  | x == '(' = TokenOpen : stringToToken xs 
-                        | x == ')' = TokenClose : stringToToken xs 
-                        | x == '+' = TokenOp Plus : stringToToken xs 
-                        | x == '-' = TokenOp Minus : stringToToken xs 
-                        | x == '*' = TokenOp Time : stringToToken xs 
-                        | x == '<' = TokenOp Inf : stringToToken xs
-                        | x == '/' = TokenOp Div : stringToToken xs
-                        | x == '\'' = Word "'" : stringToToken xs 
-                        | isAlpha x = isOp word : stringToToken restchar
+stringToToken s@(x:xs)  | x == '(' = TokenOpen      : stringToToken xs 
+                        | x == ')' = TokenClose     : stringToToken xs 
+                        | x == '+' = TokenOp Plus   : stringToToken xs 
+                        | x == '-' = TokenOp Minus  : stringToToken xs 
+                        | x == '*' = TokenOp Time   : stringToToken xs 
+                        | x == '<' = TokenOp Inf    : stringToToken xs
+                        | x == '/' = TokenOp Div    : stringToToken xs
+                        | x == '\'' = Word "'"      : stringToToken xs 
+                        | isAlpha x = isOp word     : stringToToken restchar
                         | isSpace x = stringToToken xs
                         | x == '\n' = stringToToken xs
                         | isDigit x = Number (read num :: Int) : stringToToken restnum

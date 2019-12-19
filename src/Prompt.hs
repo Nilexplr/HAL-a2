@@ -16,15 +16,15 @@ import Parser
 import Tokenize
 import Eval
 
-displayEval :: AccessMemory -> IO()
-displayEval _ = putStr "In Progress\n"
+handler :: SomeException -> IO ()
+handler ex = putStrLn $ "*** ERROR : " ++ show ex
 
+displayEval :: AccessMemory -> IO()
+displayEval _ = putStrLn "In progress"--catch (putStrLn $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
 
 launchPrompt :: AccessMemory -> IO()
 launchPrompt _ = forever $ do
         putStr "> " >> hFlush stdout
         out <- getLine
-        catch (putStrLn $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
-            where
-                handler :: SomeException -> IO ()
-                handler ex = putStrLn $ "*** ERROR : " ++ show ex
+        catch (putStrLn $ displayExpr $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
+                
