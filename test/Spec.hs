@@ -1,2 +1,8 @@
+import Tokenize
+import Test.QuickCheck
+import TestToken
+
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = do
+    testToken
