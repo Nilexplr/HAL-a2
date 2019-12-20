@@ -9,21 +9,21 @@ import Control.Exception
 testFunctionnal :: IO()
 testFunctionnal = do
     -- Arithmetic Tests
-    quickCheck(launch "(+ 4 4)"                 == "8")
-    quickCheck(launch "(* 4 4)"                 == "16")
-    quickCheck(launch "(- 4 4)"                 == "0")
-    quickCheck(launch "(div 4 4)"               == "1")
-    quickCheck(launch "(- 4)"                   == "-4")
-    quickCheck(launch "(mod 15 4)"              == "3")
-    quickCheck(launch "(< 4 3)"                 == "#f")
-    quickCheck(launch "(< 3 4)"                 == "#t")
-    quickCheck(launch "(- (+ 4 4))"             == "-8")
-    quickCheck(launch "(mod (+ 2 4) (- 4 1))"   == "0")
+    quickCheck(launch "(+ 4 4)"                         == "8")
+    quickCheck(launch "(* 4 4)"                         == "16")
+    quickCheck(launch "(- 4 4)"                         == "0")
+    quickCheck(launch "(div 4 4)"                       == "1")
+    quickCheck(launch "(- 4)"                           == "-4")
+    quickCheck(launch "(mod 15 4)"                      == "3")
+    quickCheck(launch "(< 4 3)"                         == "#f")
+    quickCheck(launch "(< 3 4)"                         == "#t")
+    quickCheck(launch "(- (+ 4 4))"                     == "-8")
+    quickCheck(launch "(mod (+ 2 4) (- 4 1))"           == "0")
     -- Quote Tests
-    quickCheck(launch "(quote toto)"            == "toto")
-    quickCheck(launch "(quote (+ 1 2))"         == "(+ 1 2)")
-    quickCheck(launch "'toto"                   == "toto")
-    quickCheck(launch "'(+ 1 2)"                == "(+ 1 2)")
+    quickCheck(launch "(quote toto)"                    == "toto")
+    quickCheck(launch "(quote (+ 1 2))"                 == "(+ 1 2)")
+    quickCheck(launch "'toto"                           == "toto")
+    quickCheck(launch "'(+ 1 2)"                        == "(+ 1 2)")
     -- Cons Tests
     quickCheck(launch "(cons 1 2)"                      == "(1 . 2)")
     quickCheck(launch "(cons 1 (cons 2(cons 3 '())))"   == "(1 2 3)")
@@ -41,4 +41,4 @@ testFunctionnal = do
     quickCheck(launch "(cdr '(1 2 3 4))"                == "(2 3 4)")
         where
             launch :: String -> String
-            launch x = displayExpr $ evalExpr (AccessMemory { access = []}) ((parseExpr $ stringToToken $ x) !! 0)
+            launch x = displayExpr $ giveExpr $ evalExpr [] ((parseExpr $ stringToToken $ x) !! 0)

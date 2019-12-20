@@ -26,5 +26,5 @@ launchPrompt :: AccessMemory -> IO()
 launchPrompt x = forever $ do
         putStr "> " >> hFlush stdout
         out <- getLine
-        catch (putStrLn $ displayExpr $ (evalExpr x ((parseExpr $ stringToToken $ out) !! 0))) handler
+        catch (putStrLn $ displayExpr $ giveExpr $ (evalExpr x ((parseExpr $ stringToToken $ out) !! 0))) handler
                 
