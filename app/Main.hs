@@ -15,14 +15,16 @@ onAbort e = do
     let x = show (e :: SomeException)
     putStrLn $ "\nExit"
 
+
 main :: IO ()
 main = do
     argv <- getArgs
     args <- handleArgument argv
     case args of
         Right   (opt)       -> do
+                allContents <- fmap concat $ mapM readFile $ pathFile opt
                 if interactive opt == True
-                    then handle onAbort $ launchPrompt $ evalFiles $ pathFile opt
-                    else displayEval $ evalFiles $ pathFile opt
+                    then handle onAbort $ launchPrompt $ evalLisp $ allContents
+                    else displayEval (evalLisp $ allContents) allContents
         Left    (Invalid)   -> exitWith $ ExitFailure 84
         _                   -> exitWith ExitSuccess

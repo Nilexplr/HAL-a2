@@ -25,6 +25,7 @@ symbols =   [ "quote"
 
 data Expr = KeyWord String
             | Val Int
+            | Procedure (Expr, Expr)
             | List [Expr]
             | CellList [Expr]
             | Symbol String [Expr]
@@ -44,7 +45,7 @@ parseValue (TokenOpen : xs)                 = case parseValue xs of
     Just (expr, ys)                 -> Just (List ([expr] ++ recursive), tail rest)
                 where
                     (recursive, rest)   = parseExprs [] ys
-    Nothing                         -> error "Parse Value return nothing wher token open is detected"
+    Nothing                         -> error "Parse Value return nothing when token open is detected"
 -- Launch a recursive to parse the expressions tab
 parseValue (TokenOp op :xs)                 = Just (Calcul op recursive, rest)
                 where
@@ -83,6 +84,5 @@ Launch the expression's parsing instance
 parseExpr :: [Token] -> [Expr]
 parseExpr [] = []
 parseExpr tokens = case parseExprs [] tokens of
-    (result, []) -> result
-    -- (result, ys) -> result
-    _           -> error "bad parsing"
+    (result, [])    -> result
+    _               -> error "bad parsing"
