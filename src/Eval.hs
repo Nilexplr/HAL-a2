@@ -62,7 +62,7 @@ giveAccessMemory (ram, expr) = ram
 displayExpr :: Expr -> String
 displayExpr (Val nb)                    = show nb
 displayExpr (KeyWord x)                 = x
-displayExpr (Procedure _)               = "#<procedure>"
+displayExpr (Procedure x)               = "#<procedure>" ++ show x
 displayExpr (List [])                   = "()"
 displayExpr (CellList [])               = "()"
 displayExpr (List exprs@(x:xs))         = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
@@ -126,12 +126,13 @@ TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is 
 -}
 evalExpr :: AccessMemory -> Expr -> (AccessMemory, Expr)
 evalExpr ram (Val nb)               = (ram, Val nb)
+evalExpr ram (Procedure x)          = (ram, Procedure x)
 evalExpr ram (KeyWord x)            = (ram, (getInAccess ram x))
 --
 evalExpr ram (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
                                     | (evalArithmetic ram (x !! 0)) < (evalArithmetic ram (x !! 1))     = (ram, KeyWord "#t")
                                     | otherwise                                                         = (ram, KeyWord "#f")
---
+--(List ([transformLetToLambda] ++ parameters))
 evalExpr ram expr@(Calcul _ _)      =  (ram, Val (evalArithmetic ram expr))
 --
 evalExpr ram (Symbol "quote" x)     | length x /= 1     = error "Invalid argument for quote"
@@ -194,13 +195,28 @@ evalExpr ram (Symbol "cond" x)      | length x == 0     = error "Invalid argumen
 evalExpr ram (Symbol "lambda" x)    | length x /= 2     = error "Invalid argument for lambda"
                                     | otherwise         = (ram, Procedure (x !! 0, x !! 1))  
 --
-evalExpr ram (Symbol "define" x)    | length x /= 2     = error "Invalid argument for lambda"
+evalExpr ram (Symbol "define" x)    | length x /= 2     = error "Invalid argument for define"
                                     | otherwise         = (addToAccess ram mem, KeyWord $ name $ mem)
                                             where
                                                 mem = transformExprToMemory (List x)
 --
-evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argument for lambda"
-                                    | otherwise         = (ram, Procedure (x !! 0, x !! 1)) 
+evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argument for let"
+                                    | otherwise         = evalExpr ram (List ([transformLetToLambda] ++ parameters))
+                                            where
+                                                transformLetToLambda = Procedure (args, body)
+                                                args        = case x !! 0 of
+                                                    List z  -> List [case y of 
+                                                            List w -> w !! 0
+                                                            _       -> error "error" 
+                                                        | y <- z]
+                                                    _       -> error "Bad Argument into Let"
+                                                parameters  = case x !! 0 of
+                                                    List z  -> [giveExpr $ evalExpr ram $ case y of 
+                                                            List w -> w !! 1 
+                                                            _      -> error "error"
+                                                        | y <- z]
+                                                    _       -> error "Bad Argument into Let"
+                                                body        = x !! 1
 --
 evalExpr ram expr@(List x)         = case evalExpr ram $ head $ x of
     (_, Procedure (List args, body))      -> (ram, result)
@@ -222,7 +238,7 @@ evalExpr ram expr@(CellList x)      = case x of
     (List n:(Val y:[]))             -> (ram, expr)
 
 --
-evalExpr ram _                      = error "Impossible to evaluate expression"
+evalExpr ram x                      = error ("Impossible to evaluate expression " ++ show x)
 
 
 {-
