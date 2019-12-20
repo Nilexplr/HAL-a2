@@ -41,10 +41,8 @@ getInAccess _ _ = error "Can not get symbol to access memory"
 transformExprToMemory :: Expr -> Memory
 transformExprToMemory (List (KeyWord symbol: (y:[])))   = Memory { name = symbol, scope = y}
 transformExprToMemory (List (List args: (y:[])))        = case args of
-    (KeyWord symbol: args)  ->  Memory { name = symbol, scope = Procedure (List args, y)} 
-        where
-            where
-        --
+    (KeyWord symbol: rest)  ->  Memory { name = symbol, scope = Procedure (List rest, y)} 
+--
 transformExprToMemory _ = error "Can not transform expression to memory"
 {-
 
@@ -101,6 +99,7 @@ Eval an arithmetic expression
 -}
 evalArithmetic :: AccessMemory -> Expr -> Int
 evalArithmetic ram (Val nb)            =  nb
+evalArithmetic ram (KeyWord x)         =  evalArithmetic ram (getInAccess ram x)
 evalArithmetic ram (Calcul Plus x)     =  sum       [evalArithmetic ram y | y <- x]
 evalArithmetic ram (Calcul Minus x)    |  length x == 1 = - (evalArithmetic ram (x !! 0))
                                    | otherwise = soustract [evalArithmetic ram y | y <- x]
@@ -128,7 +127,6 @@ TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is 
 evalExpr :: AccessMemory -> Expr -> (AccessMemory, Expr)
 evalExpr ram (Val nb)               = (ram, Val nb)
 evalExpr ram (KeyWord x)            = (ram, (getInAccess ram x))
-evalExpr ram (List x)               = (ram, List x)
 --
 evalExpr ram (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
                                     | (evalArithmetic ram (x !! 0)) < (evalArithmetic ram (x !! 1))     = (ram, KeyWord "#t")
@@ -204,7 +202,13 @@ evalExpr ram (Symbol "define" x)    | length x /= 2     = error "Invalid argumen
 evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argument for lambda"
                                     | otherwise         = (ram, Procedure (x !! 0, x !! 1)) 
 --
--- evalExpr ram (List x)               | x == 
+evalExpr ram expr@(List x)         = case evalExpr ram $ head $ x of
+    (_, Procedure (List args, body))      -> (ram, result)
+        where
+            y = tail x
+            defineArgs = [transformExprToMemory (List [(args !! i), y !! i]) | i <- take (length args) [0,1..] ]
+            (_, result) = evalExpr (ram ++ defineArgs) body
+    _                               -> error "Can not evaluate list"
 --
 evalExpr ram expr@(CellList x)      = case x of
     (Val n:(List y:[]))             -> (ram, List (Val n:y))
@@ -233,4 +237,4 @@ Create the AccessMemory
 -}
 evalFiles :: [String] -> AccessMemory
 evalFiles [] = []
-evalFiles filesList = concat [evalLisp $ filesList !! i | i <- take (length filesList) [0,1..]] 
+evalFiles filesList = concat [evalLisp $ i | i <- filesList] 
