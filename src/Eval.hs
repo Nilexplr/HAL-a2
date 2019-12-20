@@ -1,7 +1,7 @@
 module Eval 
     ( AccessMemory(..)
     , Memory(..)
-    , evalFiles
+    , evalLisp
     , evalExpr
     , evalArithmetic
     , displayExpr
@@ -184,10 +184,11 @@ evalExpr ram (Symbol "atom?" x)     | length x /= 1     = error "Invalid argumen
 --
 evalExpr ram (Symbol "cond" x)      | length x == 0     = error "Invalid argument for cond"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, List (y:ys))     -> case evalExpr ram y of
+                                        (ram, List [])          -> error "Empty cond"
+                                        (ram, List (y:ys))      -> case evalExpr ram y of
                                             (ram, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
                                             _                       -> (evalExpr ram $ (Symbol "cond" (tail x)))
-                                        (ram, CellList (y:ys)) -> case evalExpr ram y of
+                                        (ram, CellList (y:ys))  -> case evalExpr ram y of
                                             (ram, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
                                             _                       -> (evalExpr ram $ (Symbol "cond" (tail x)))
                                         otherwise       -> error "Impossible to evaluate cond"
@@ -219,12 +220,14 @@ evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argumen
                                                 body        = x !! 1
 --
 evalExpr ram expr@(List x)         = case evalExpr ram $ head $ x of
-    (_, Procedure (List args, body))      -> (ram, result)
-        where
-            y = tail x
-            defineArgs = [transformExprToMemory (List [(args !! i), y !! i]) | i <- take (length args) [0,1..] ]
-            (_, result) = evalExpr (ram ++ defineArgs) body
-    _                               -> error "Can not evaluate list"
+    (_, Procedure (List args, body))    -> (ram, result)
+                                                where
+                                                    y = tail x
+                                                    defineArgs = [transformExprToMemory (List [(args !! i), y !! i]) | i <- take (length args) [0,1..] ]
+                                                    (_, result) = evalExpr (ram ++ defineArgs) body
+    (_, KeyWord n)                      -> evalExpr ram $ head $ x --of
+        -- (_, Procedure z) -> (ram, List (Procedure z: tail x))
+    _                                   -> error "Can not evaluate list"
 --
 evalExpr ram expr@(CellList x)      = case x of
     (Val n:(List y:[]))             -> (ram, List (Val n:y))
@@ -242,15 +245,8 @@ evalExpr ram x                      = error ("Impossible to evaluate expression 
 
 
 {-
-Eval a lisp file to an array of Memory
+Eval a lisp file and put it to AccesMemory
 -}
-evalLisp :: String -> [Memory]
+evalLisp :: String -> AccessMemory
 evalLisp [] = []
-evalLisp filename = []
-
-{-
-Create the AccessMemory
--}
-evalFiles :: [String] -> AccessMemory
-evalFiles [] = []
-evalFiles filesList = concat [evalLisp $ i | i <- filesList] 
+evalLisp file = concat [giveAccessMemory (evalExpr [] x) | x <- parseExpr $ stringToToken $ file]

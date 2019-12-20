@@ -19,8 +19,11 @@ import Eval
 handler :: SomeException -> IO ()
 handler ex = putStrLn $ "*** ERROR : " ++ show ex
 
-displayEval :: AccessMemory -> IO()
-displayEval _ = putStrLn "In progress"--catch (putStrLn $ evalExpr $ (parseExpr $ stringToToken $ out) !! 0) handler
+displayEval :: AccessMemory -> String -> IO()
+displayEval ram files = do
+    catch (putStrLn $ displayExpr $ giveExpr $ evalExpr ram $ expr) handler
+        where 
+            expr   = last $ parseExpr $ stringToToken $ files
 
 launchPrompt :: AccessMemory -> IO()
 launchPrompt ram = do
