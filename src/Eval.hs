@@ -24,16 +24,17 @@ type AccessMemory = [Memory]
 -}
 addToAccess :: AccessMemory -> Memory -> AccessMemory
 addToAccess [] new  = [new]
-addToAccess list new | length [x | x <- list, name x == name new] /= 0 = [x | x <- list, name x /= name new] ++ [new] 
-addToAccess _ _ = error "Can not add memory to access memory"
+addToAccess list new    | length [x | x <- list, name x == name new] /= 0 = [x | x <- list, name x /= name new] ++ [new]
+                        | length [x | x <- list, name x == name new] == 0 = list ++ [new]
+addToAccess _ new = error ("Can not add memory to access memory " ++ (show $ new))
 
 {-
 
 -}
 getInAccess :: AccessMemory -> String -> Expr
 getInAccess [] cible = error ("Variable " ++ cible ++ " not in bound")
-getInAccess list cible | length [x | x <- list, name x == cible] == 1 = scope ([x | x <- list, name x == cible] !! 0)
-getInAccess _ _ = error "Can not get symbol to access memory"
+getInAccess list cible | length [x | x <- list, name x == cible] >= 1 = scope (last [x | x <- list, name x == cible])
+getInAccess _ cible = error ("Variable " ++ cible ++ " not in bound")
 
 {-
 
@@ -41,7 +42,8 @@ getInAccess _ _ = error "Can not get symbol to access memory"
 transformExprToMemory :: Expr -> Memory
 transformExprToMemory (List (KeyWord symbol: (y:[])))   = Memory { name = symbol, scope = y}
 transformExprToMemory (List (List args: (y:[])))        = case args of
-    (KeyWord symbol: rest)  ->  Memory { name = symbol, scope = Procedure (List rest, y)} 
+    (KeyWord symbol: rest)      ->  Memory { name = symbol, scope = Procedure (List rest, y)}
+
 --
 transformExprToMemory _ = error "Can not transform expression to memory"
 {-
@@ -62,7 +64,7 @@ giveAccessMemory (ram, expr) = ram
 displayExpr :: Expr -> String
 displayExpr (Val nb)                    = show nb
 displayExpr (KeyWord x)                 = x
-displayExpr (Procedure x)               = "#<procedure>" ++ show x
+displayExpr (Procedure x)               = "#<procedure>"
 displayExpr (List [])                   = "()"
 displayExpr (CellList [])               = "()"
 displayExpr (List exprs@(x:xs))         = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
@@ -99,6 +101,7 @@ Eval an arithmetic expression
 -}
 evalArithmetic :: AccessMemory -> Expr -> Int
 evalArithmetic ram (Val nb)            =  nb
+evalArithmetic ram expr@(List nb)      =  evalArithmetic ram $ giveExpr $ evalExpr ram $ expr
 evalArithmetic ram (KeyWord x)         =  evalArithmetic ram (getInAccess ram x)
 evalArithmetic ram (Calcul Plus x)     =  sum       [evalArithmetic ram y | y <- x]
 evalArithmetic ram (Calcul Minus x)    |  length x == 1 = - (evalArithmetic ram (x !! 0))
@@ -120,19 +123,17 @@ evalArithmetic ram (Calcul Mod x)      | length x /= 2 = error "Impossible to Mo
 
 {-
 Eval an Expression
-
-TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is detect
-        And to stock define data
 -}
 evalExpr :: AccessMemory -> Expr -> (AccessMemory, Expr)
 evalExpr ram (Val nb)               = (ram, Val nb)
 evalExpr ram (Procedure x)          = (ram, Procedure x)
+evalExpr ram expr@(KeyWord ('#':y)) = (ram, expr)
 evalExpr ram (KeyWord x)            = (ram, (getInAccess ram x))
 --
 evalExpr ram (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
                                     | (evalArithmetic ram (x !! 0)) < (evalArithmetic ram (x !! 1))     = (ram, KeyWord "#t")
                                     | otherwise                                                         = (ram, KeyWord "#f")
---(List ([transformLetToLambda] ++ parameters))
+--
 evalExpr ram expr@(Calcul _ _)      =  (ram, Val (evalArithmetic ram expr))
 --
 evalExpr ram (Symbol "quote" x)     | length x /= 1     = error "Invalid argument for quote"
@@ -149,14 +150,14 @@ evalExpr ram (Symbol "cons" x)      | length x /= 2     = error "Invalid argumen
 --
 evalExpr ram (Symbol "car" x)       | length x /= 1     = error "Invalid argument for car"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, CellList (y:_)) ->  (ram, y)
-                                        (ram, List (y:_))     ->  (ram, y)
+                                        (new, CellList (y:_)) ->  (new, y)
+                                        (new, List (y:_))     ->  (new, y)
 
 --
 evalExpr ram (Symbol "cdr" x)       | length x /= 1     = error "Invalid argument for cdr"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, CellList y)      -> (ram ,y !! 1)
-                                        (ram, List y)          -> (ram ,List $ tail $ y)
+                                        (new, CellList y)      -> (new ,y !! 1)
+                                        (new, List y)          -> (new ,List $ tail $ y)
 --
 evalExpr ram (Symbol "list" x)      | length x == 0     = error "Invalid argument for list"
                                     | otherwise         = (ram, List [giveExpr (evalExpr ram expr) | expr <- x])
@@ -164,32 +165,31 @@ evalExpr ram (Symbol "list" x)      | length x == 0     = error "Invalid argumen
 --
 evalExpr ram (Symbol "eq?" x)       | length x /= 2     = error "Invalid argument for eq?"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, List [])     -> case evalExpr ram (x !! 1) of
-                                            (ram, List [])      -> (ram, KeyWord "#t")
-                                            _                   -> (ram, KeyWord "#f")
-                                        (ram, Val a)       -> case evalExpr ram (x !! 1) of
-                                            (ram, Val b)        -> (ram, if a == b then KeyWord "#t" else KeyWord "#f")
-                                            _           -> (ram, KeyWord "#f")
-                                        (ram, KeyWord a)   -> case evalExpr ram (x !! 1) of
-                                            (ram, KeyWord b)    -> (ram, if a == b then KeyWord "#t" else KeyWord "#f")
-                                            _                   -> (ram, KeyWord "#f")
-                                        _                   -> (ram, KeyWord "#f")
+                                        (new, List [])     -> case evalExpr new (x !! 1) of
+                                            (new, List [])      -> (new, KeyWord "#t")
+                                            (new, _)            -> (new, KeyWord "#f")
+                                        (new, Val a)       -> case evalExpr new (x !! 1) of
+                                            (new, Val b)        -> (new, if a == b then KeyWord "#t" else KeyWord "#f")
+                                            (new, _)            -> (new, KeyWord "#f")
+                                        (new, KeyWord a)   -> case evalExpr new (x !! 1) of
+                                            (new, KeyWord b)    -> (new, if a == b then KeyWord "#t" else KeyWord "#f")
+                                            (new, _)            -> (new, KeyWord "#f")
+                                        (new, _)           -> (new, KeyWord "#f")
 --
 evalExpr ram (Symbol "atom?" x)     | length x /= 1     = error "Invalid argument for atom?"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, Val _)            -> (ram, KeyWord "#t")
-                                        (ram, KeyWord _)        -> (ram, KeyWord "#t")
-                                        (ram, List [])          -> (ram, KeyWord "#t")
-                                        _               -> (ram, KeyWord "#f")
+                                        (new, Val _)            -> (new, KeyWord "#t")
+                                        (new, KeyWord _)        -> (new, KeyWord "#t")
+                                        (new, List [])          -> (new, KeyWord "#t")
+                                        (new, _)                -> (new, KeyWord "#f")
 --
 evalExpr ram (Symbol "cond" x)      | length x == 0     = error "Invalid argument for cond"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, List [])          -> error "Empty cond"
-                                        (ram, List (y:ys))      -> case evalExpr ram y of
-                                            (ram, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
+                                        (_, List (y:ys))      -> case evalExpr ram y of
+                                            (_, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
                                             _                       -> (evalExpr ram $ (Symbol "cond" (tail x)))
-                                        (ram, CellList (y:ys))  -> case evalExpr ram y of
-                                            (ram, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
+                                        (_, CellList (y:ys))  -> case evalExpr ram y of
+                                            (_, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
                                             _                       -> (evalExpr ram $ (Symbol "cond" (tail x)))
                                         otherwise       -> error "Impossible to evaluate cond"
 --
@@ -220,13 +220,17 @@ evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argumen
                                                 body        = x !! 1
 --
 evalExpr ram expr@(List x)         = case evalExpr ram $ head $ x of
-    (_, Procedure (List args, body))    -> (ram, result)
+    (new, Procedure (List args, body))    -> (new, result)
                                                 where
                                                     y = tail x
-                                                    defineArgs = [transformExprToMemory (List [(args !! i), y !! i]) | i <- take (length args) [0,1..] ]
-                                                    (_, result) = evalExpr (ram ++ defineArgs) body
-    (_, KeyWord n)                      -> evalExpr ram $ head $ x --of
-        -- (_, Procedure z) -> (ram, List (Procedure z: tail x))
+                                                    defineArgs = [transformExprToMemory (List [(args !! i), giveExpr $ evalExpr new $ y !! i]) | i <- take (length args) [0,1..] ]
+                                                    (fresh, result) = evalExpr (ram ++ defineArgs) body
+    (new, KeyWord ('#':y))                -> (new, expr)
+    -- Todo: Exhaustive case
+    (new, z)                                -> (fresh, result)
+                                                    where
+                                                        y = tail x
+                                                        (fresh, result) = evalExpr new z
     _                                   -> error "Can not evaluate list"
 --
 evalExpr ram expr@(CellList x)      = case x of
@@ -244,9 +248,12 @@ evalExpr ram expr@(CellList x)      = case x of
 evalExpr ram x                      = error ("Impossible to evaluate expression " ++ show x)
 
 
+evalFile :: [Expr] -> AccessMemory -> AccessMemory
+evalFile [] x       = x
+evalFile (x:xs) mem = evalFile xs (giveAccessMemory (evalExpr mem x)) 
 {-
 Eval a lisp file and put it to AccesMemory
 -}
 evalLisp :: String -> AccessMemory
 evalLisp [] = []
-evalLisp file = concat [giveAccessMemory (evalExpr [] x) | x <- parseExpr $ stringToToken $ file]
+evalLisp file = evalFile (parseExpr $ stringToToken $ file) []
