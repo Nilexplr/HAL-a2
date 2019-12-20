@@ -248,9 +248,12 @@ evalExpr ram expr@(CellList x)      = case x of
 evalExpr ram x                      = error ("Impossible to evaluate expression " ++ show x)
 
 
+evalFile :: [Expr] -> AccessMemory -> AccessMemory
+evalFile [] x       = x
+evalFile (x:xs) mem = evalFile xs (giveAccessMemory (evalExpr mem x)) 
 {-
 Eval a lisp file and put it to AccesMemory
 -}
 evalLisp :: String -> AccessMemory
 evalLisp [] = []
-evalLisp file = concat [giveAccessMemory (evalExpr [] x) | x <- parseExpr $ stringToToken $ file]
+evalLisp file = evalFile (parseExpr $ stringToToken $ file) []
