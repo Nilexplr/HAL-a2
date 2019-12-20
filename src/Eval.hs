@@ -33,7 +33,7 @@ addToAccess _ new = error ("Can not add memory to access memory " ++ (show $ new
 -}
 getInAccess :: AccessMemory -> String -> Expr
 getInAccess [] cible = error ("Variable " ++ cible ++ " not in bound")
-getInAccess list cible | length [x | x <- list, name x == cible] == 1 = scope ([x | x <- list, name x == cible] !! 0)
+getInAccess list cible | length [x | x <- list, name x == cible] >= 1 = scope (last [x | x <- list, name x == cible])
 getInAccess _ cible = error ("Variable " ++ cible ++ " not in bound")
 
 {-
