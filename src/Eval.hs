@@ -33,7 +33,7 @@ addToAccess _ _ = error "Can not add memory to access memory"
 getInAccess :: AccessMemory -> String -> Expr
 getInAccess [] cible = error ("Variable " ++ cible ++ " not in bound")
 getInAccess list cible | length [x | x <- list, name x == cible] == 1 = scope ([x | x <- list, name x == cible] !! 0)
-getInAccess _ _ = error "Can not get symbol to access memory"
+getInAccess _ cible = error ("Variable " ++ cible ++ " not in bound")
 
 {-
 
@@ -62,7 +62,7 @@ giveAccessMemory (ram, expr) = ram
 displayExpr :: Expr -> String
 displayExpr (Val nb)                    = show nb
 displayExpr (KeyWord x)                 = x
-displayExpr (Procedure x)               = "#<procedure>" ++ show x
+displayExpr (Procedure x)               = "#<procedure>"
 displayExpr (List [])                   = "()"
 displayExpr (CellList [])               = "()"
 displayExpr (List exprs@(x:xs))         = "(" ++ displayExpr (head exprs) ++ concat [" " ++ displayExpr x | x <- (tail exprs)] ++ ")"
@@ -99,6 +99,7 @@ Eval an arithmetic expression
 -}
 evalArithmetic :: AccessMemory -> Expr -> Int
 evalArithmetic ram (Val nb)            =  nb
+evalArithmetic ram expr@(List nb)      =  evalArithmetic ram $ giveExpr $ evalExpr ram $ expr
 evalArithmetic ram (KeyWord x)         =  evalArithmetic ram (getInAccess ram x)
 evalArithmetic ram (Calcul Plus x)     =  sum       [evalArithmetic ram y | y <- x]
 evalArithmetic ram (Calcul Minus x)    |  length x == 1 = - (evalArithmetic ram (x !! 0))
@@ -127,6 +128,7 @@ TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is 
 evalExpr :: AccessMemory -> Expr -> (AccessMemory, Expr)
 evalExpr ram (Val nb)               = (ram, Val nb)
 evalExpr ram (Procedure x)          = (ram, Procedure x)
+evalExpr ram expr@(KeyWord ('#':y)) = (ram, expr)
 evalExpr ram (KeyWord x)            = (ram, (getInAccess ram x))
 --
 evalExpr ram (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
@@ -184,7 +186,6 @@ evalExpr ram (Symbol "atom?" x)     | length x /= 1     = error "Invalid argumen
 --
 evalExpr ram (Symbol "cond" x)      | length x == 0     = error "Invalid argument for cond"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, List [])          -> error "Empty cond"
                                         (ram, List (y:ys))      -> case evalExpr ram y of
                                             (ram, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
                                             _                       -> (evalExpr ram $ (Symbol "cond" (tail x)))
@@ -220,13 +221,13 @@ evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argumen
                                                 body        = x !! 1
 --
 evalExpr ram expr@(List x)         = case evalExpr ram $ head $ x of
-    (_, Procedure (List args, body))    -> (ram, result)
+    (ram, Procedure (List args, body))    -> (ram, result)
                                                 where
                                                     y = tail x
                                                     defineArgs = [transformExprToMemory (List [(args !! i), y !! i]) | i <- take (length args) [0,1..] ]
                                                     (_, result) = evalExpr (ram ++ defineArgs) body
-    (_, KeyWord n)                      -> evalExpr ram $ head $ x --of
-        -- (_, Procedure z) -> (ram, List (Procedure z: tail x))
+    (ram, KeyWord ('#':y))                -> (ram, expr)
+    (ram, KeyWord n)                      -> evalExpr ram $ head $ x
     _                                   -> error "Can not evaluate list"
 --
 evalExpr ram expr@(CellList x)      = case x of
