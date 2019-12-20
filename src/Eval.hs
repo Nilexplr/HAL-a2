@@ -6,6 +6,7 @@ module Eval
     , evalArithmetic
     , displayExpr
     , giveExpr
+    , giveAccessMemory
     )
     where
 
@@ -13,11 +14,53 @@ import Tokenize
 import Parser
 
 -- Create more Memory type can be possible (for exemple instruction)
-data Memory = Memory { name :: String, scope :: Expr}
+data Memory = Memory { name :: String, scope :: Expr} deriving (Show, Eq)
 
 -- Memory that the user can use to save define variable or instructions
 type AccessMemory = [Memory]
 
+{-
+
+-}
+addToAccess :: AccessMemory -> Memory -> AccessMemory
+addToAccess [] new  = [new]
+addToAccess list new | length [x | x <- list, name x == name new] /= 0 = [x | x <- list, name x /= name new] ++ [new] 
+addToAccess _ _ = error "Can not add memory to access memory"
+
+{-
+
+-}
+getInAccess :: AccessMemory -> String -> Expr
+getInAccess [] cible = error ("Variable " ++ cible ++ " not in bound")
+getInAccess list cible | length [x | x <- list, name x == cible] == 1 = scope ([x | x <- list, name x == cible] !! 0)
+getInAccess _ _ = error "Can not get symbol to access memory"
+
+{-
+
+-}
+transformExprToMemory :: Expr -> Memory
+transformExprToMemory (List (KeyWord symbol: (y:[])))   = Memory { name = symbol, scope = y}
+transformExprToMemory (List (List args: (y:[])))        = case args of
+    (KeyWord symbol: args)  ->  Memory { name = symbol, scope = Procedure (List args, y)} 
+        where
+            where
+        --
+transformExprToMemory _ = error "Can not transform expression to memory"
+{-
+
+-}
+giveExpr :: (AccessMemory, Expr) -> Expr
+giveExpr (ram, expr) = expr
+
+{-
+
+-}
+giveAccessMemory :: (AccessMemory, Expr) -> AccessMemory
+giveAccessMemory (ram, expr) = ram
+
+{-
+
+-}
 displayExpr :: Expr -> String
 displayExpr (Val nb)                    = show nb
 displayExpr (KeyWord x)                 = x
@@ -75,10 +118,7 @@ evalArithmetic ram (Calcul Div x)      =  divide    [evalArithmetic ram y | y <-
 --
 evalArithmetic ram (Calcul Mod x)      | length x /= 2 = error "Impossible to Modulo more than 2 numbers"
                                    | otherwise     = (evalArithmetic ram (x !! 0)) `mod` (evalArithmetic ram (x !! 1))
-                            
 
-giveExpr :: (AccessMemory, Expr) -> Expr
-giveExpr (ram, expr) = expr
 {-
 Eval an Expression
 
@@ -87,7 +127,7 @@ TODO:   Implement the AccesMemory to the evalExpr to look inside when a word is 
 -}
 evalExpr :: AccessMemory -> Expr -> (AccessMemory, Expr)
 evalExpr ram (Val nb)               = (ram, Val nb)
-evalExpr ram (KeyWord x)            = (ram, KeyWord x)
+evalExpr ram (KeyWord x)            = (ram, (getInAccess ram x))
 evalExpr ram (List x)               = (ram, List x)
 --
 evalExpr ram (Calcul Inf x)         | length x /= 2     = error "Impossible to compare more than 2 numbers"
@@ -126,38 +166,40 @@ evalExpr ram (Symbol "list" x)      | length x == 0     = error "Invalid argumen
 evalExpr ram (Symbol "eq?" x)       | length x /= 2     = error "Invalid argument for eq?"
                                     | otherwise         = case evalExpr ram (head $ x) of
                                         (ram, List [])     -> case evalExpr ram (x !! 1) of
-                                            (ram, List [])     -> (ram, KeyWord "#t")
-                                            _           -> (ram, KeyWord "#f")
+                                            (ram, List [])      -> (ram, KeyWord "#t")
+                                            _                   -> (ram, KeyWord "#f")
                                         (ram, Val a)       -> case evalExpr ram (x !! 1) of
-                                            (ram, Val b)       -> (ram, if a == b then KeyWord "#t" else KeyWord "#f")
+                                            (ram, Val b)        -> (ram, if a == b then KeyWord "#t" else KeyWord "#f")
                                             _           -> (ram, KeyWord "#f")
                                         (ram, KeyWord a)   -> case evalExpr ram (x !! 1) of
-                                            (ram, KeyWord b)   -> (ram, if a == b then KeyWord "#t" else KeyWord "#f")
-                                            _           -> (ram, KeyWord "#f")
-                                        _           -> (ram, KeyWord "#f")
+                                            (ram, KeyWord b)    -> (ram, if a == b then KeyWord "#t" else KeyWord "#f")
+                                            _                   -> (ram, KeyWord "#f")
+                                        _                   -> (ram, KeyWord "#f")
 --
 evalExpr ram (Symbol "atom?" x)     | length x /= 1     = error "Invalid argument for atom?"
                                     | otherwise         = case evalExpr ram (head $ x) of
-                                        (ram, Val _)           -> (ram, KeyWord "#t")
-                                        (ram, KeyWord _)       -> (ram, KeyWord "#t")
-                                        (ram, List [])         -> (ram, KeyWord "#t")
+                                        (ram, Val _)            -> (ram, KeyWord "#t")
+                                        (ram, KeyWord _)        -> (ram, KeyWord "#t")
+                                        (ram, List [])          -> (ram, KeyWord "#t")
                                         _               -> (ram, KeyWord "#f")
 --
 evalExpr ram (Symbol "cond" x)      | length x == 0     = error "Invalid argument for cond"
                                     | otherwise         = case evalExpr ram (head $ x) of
                                         (ram, List (y:ys))     -> case evalExpr ram y of
-                                            (ram, KeyWord "#t")    -> (evalExpr ram (ys !! 0))
-                                            _               -> (evalExpr ram $ (Symbol "cond" (tail x)))
+                                            (ram, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
+                                            _                       -> (evalExpr ram $ (Symbol "cond" (tail x)))
                                         (ram, CellList (y:ys)) -> case evalExpr ram y of
-                                            (ram, KeyWord "#t")    -> (evalExpr ram (ys !! 0))
-                                            _               -> (evalExpr ram $ (Symbol "cond" (tail x)))
+                                            (ram, KeyWord "#t")     -> (evalExpr ram (ys !! 0))
+                                            _                       -> (evalExpr ram $ (Symbol "cond" (tail x)))
                                         otherwise       -> error "Impossible to evaluate cond"
 --
 evalExpr ram (Symbol "lambda" x)    | length x /= 2     = error "Invalid argument for lambda"
                                     | otherwise         = (ram, Procedure (x !! 0, x !! 1))  
 --
 evalExpr ram (Symbol "define" x)    | length x /= 2     = error "Invalid argument for lambda"
-                                    | otherwise         = (ram, Procedure (x !! 0, x !! 1)) 
+                                    | otherwise         = (addToAccess ram mem, KeyWord $ name $ mem)
+                                            where
+                                                mem = transformExprToMemory (List x)
 --
 evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argument for lambda"
                                     | otherwise         = (ram, Procedure (x !! 0, x !! 1)) 
