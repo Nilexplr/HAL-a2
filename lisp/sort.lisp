@@ -21,3 +21,5 @@
             (#t (let ((lsts (split-half  lst'()'())))
                 (merge-lists    (merge-sort (car  lsts))
                                 (merge-sort (cdr  lsts)))))))
+
+(merge-sort '(1 2 3))

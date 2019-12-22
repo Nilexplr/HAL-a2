@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5bf392abec0b1cf90ebb3f27748544e10985e6088e54406f91525ec7ea4c2f32
+-- hash: b019109b865a4ea3e47c877b7a2f9be94d622ce35266bb5ff035bbdd1a016394
 
 name:           HAL-a2
 version:        0.1.0.0
@@ -56,11 +56,15 @@ test-suite HAL-a2-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      TestFunctionnal
+      TestToken
       Paths_HAL_a2
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HAL-a2
+    , QuickCheck
     , base >=4.7 && <5
+    , hspec
   default-language: Haskell2010
