@@ -79,7 +79,7 @@ testFunctionnal = describe "Tests functionnel" $ do
         launch "(list (+ 1 1) (* 2 2))"          `shouldBe` "(2 4)"
     -- Lambda Tests
     it "Display lambda" $
-        launch "(lambda (a b) (+ a b))"          `shoul"2"dBe` "#<procedure>"
+        launch "(lambda (a b) (+ a b))"          `shouldBe` "#<procedure>"
     it "Basic lambda" $
         launch "((lambda (a b) (+ a b)) 1 2)"    `shouldBe` "3"
     -- Define Tests
