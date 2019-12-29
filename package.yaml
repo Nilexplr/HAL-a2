@@ -47,3 +47,4 @@ tests:
     dependencies:
     - HAL-a2
     - QuickCheck
+    - hspec

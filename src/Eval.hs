@@ -208,13 +208,14 @@ evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argumen
                                                 args        = case x !! 0 of
                                                     List z  -> List [case y of 
                                                             List w -> w !! 0
-                                                            _       -> error "error" 
+                                                            _       -> error ("error to eval argument in Let: " ++ (show x))
                                                         | y <- z]
                                                     _       -> error "Bad Argument into Let"
+                                                --
                                                 parameters  = case x !! 0 of
-                                                    List z  -> [giveExpr $ evalExpr ram $ case y of 
+                                                    List z  -> [case y of 
                                                             List w -> w !! 1 
-                                                            _      -> error "error"
+                                                            _      -> error "error to eval parameter in Let"
                                                         | y <- z]
                                                     _       -> error "Bad Argument into Let"
                                                 body        = x !! 1
