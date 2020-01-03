@@ -1,6 +1,7 @@
 module Parser 
     ( Expr(..)
     , parseExpr
+    , parseValue
     )
     where
 
@@ -58,6 +59,9 @@ parseValue (Word n:xs)  | n `elem` symbols  =   Just (Symbol n recursive, rest)
                         | otherwise         =   Just (KeyWord n, xs)
                 where
                     (recursive, rest) = parseExprs [] xs
+
+-- Error for token arrey empty
+parseValue [] = error ("Token array empty")
 
 -- Error for parsing the value
 parseValue x = error ("Token not recognize")
