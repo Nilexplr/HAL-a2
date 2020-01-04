@@ -117,6 +117,8 @@ testMemory :: String -> Spec
 testMemory into = describe "Tests memory functionnel" $ do
     it "Factoriel file test" $
         launch "(fact 2)" (evalLisp into)       `shouldBe` "2"
+    it "Fibonnacci file test" $
+        launch "(fib 10)" (evalLisp into)       `shouldBe` "55"
     it "sort file test" $
         launch "(merge-sort '(39 16 22 24 17 29 18 26 27 3 34 25 10 6 7 12 8 30 2 21 13 36 14 3832 41 40 4 35 19 5 33 23 9 15 31 28 20 42 37 11 1))" (evalLisp into)       `shouldBe` "(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 2324 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42)"
     where
