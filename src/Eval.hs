@@ -235,11 +235,6 @@ evalExpr ram expr@(List x)         = case evalExpr ram $ head $ x of
                                                     defineArgs = [transformExprToMemory (List [(args !! i), giveExpr $ evalExpr new $ y !! i]) | i <- take (length args) [0,1..] ]
                                                     (fresh, result) = evalExpr (ram ++ defineArgs) body
     (new, KeyWord ('#':y))                -> (new, expr)
-    -- Todo: Exhaustive case
-    (new, z)                                -> (fresh, result)
-                                                    where
-                                                        y = tail x
-                                                        (fresh, result) = evalExpr new z
     _                                   -> error "Can not evaluate list"
 --
 evalExpr ram expr@(CellList x)      = case x of
