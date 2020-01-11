@@ -42,6 +42,7 @@ parseValue (TokenOpen : (TokenClose:xs))    = Just (List [], xs)
 -- Launch a parsing instance inside a parenthesis
 parseValue (TokenOpen : xs)                 = case parseValue xs of
     Just (Val n, (TokenClose : ys))  -> Just (List [Val n], ys)
+    Just (KeyWord n, (TokenClose : ys))  -> Just (List [KeyWord n], ys)
     Just (expr, (TokenClose : ys))  -> Just (expr, ys)
     Just (expr, ys)                 -> Just (List ([expr] ++ recursive), tail rest)
                 where

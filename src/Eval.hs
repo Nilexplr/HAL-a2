@@ -220,8 +220,8 @@ evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argumen
                                                 --
                                                 parameters  = case x !! 0 of
                                                     List z  -> case z !! 0 of
-                                                        KeyWord a   -> [giveExpr $ evalExpr ram $ z !! 1]
-                                                        _           -> [giveExpr $ evalExpr ram $ case y of 
+                                                        KeyWord a   -> [z !! 1]
+                                                        _           -> [case y of 
                                                             List w      -> w !! 1
                                                             _      -> error "error to eval parameter in Let"
                                                             | y <- z]
