@@ -101,7 +101,6 @@ Eval an arithmetic expression
 -}
 evalArithmetic :: AccessMemory -> Expr -> Int
 evalArithmetic ram (Val nb)            =  nb
-evalArithmetic ram expr@(List nb)      =  evalArithmetic ram $ giveExpr $ evalExpr ram $ expr
 evalArithmetic ram (KeyWord x)         =  evalArithmetic ram (getInAccess ram x)
 evalArithmetic ram (Calcul Plus x)     =  sum       [evalArithmetic ram y | y <- x]
 evalArithmetic ram (Calcul Minus x)    |  length x == 1 = - (evalArithmetic ram (x !! 0))
@@ -119,7 +118,9 @@ evalArithmetic ram (Calcul Div x)      =  divide    [evalArithmetic ram y | y <-
                                         divide (x:(y:rest)) = divide (quot x y:rest)
 --
 evalArithmetic ram (Calcul Mod x)      | length x /= 2 = error "Impossible to Modulo more than 2 numbers"
-                                   | otherwise     = (evalArithmetic ram (x !! 0)) `mod` (evalArithmetic ram (x !! 1))
+                                       | otherwise     = (evalArithmetic ram (x !! 0)) `mod` (evalArithmetic ram (x !! 1))
+--
+evalArithmetic ram x                   = evalArithmetic ram $ giveExpr $ evalExpr ram $ x
 
 {-
 Eval an Expression
@@ -152,12 +153,15 @@ evalExpr ram (Symbol "car" x)       | length x /= 1     = error "Invalid argumen
                                     | otherwise         = case evalExpr ram (head $ x) of
                                         (new, CellList (y:_)) ->  (new, y)
                                         (new, List (y:_))     ->  (new, y)
+                                        (new, x)              -> error ("Error in car command because of " ++ show x)
 
 --
 evalExpr ram (Symbol "cdr" x)       | length x /= 1     = error "Invalid argument for cdr"
                                     | otherwise         = case evalExpr ram (head $ x) of
                                         (new, CellList y)      -> (new ,y !! 1)
+                                        (new, List (y:[]))     -> (new ,List [])
                                         (new, List y)          -> (new ,List $ tail $ y)
+                                        (new, x)               -> error ("Error in cdr command because of " ++ show x)
 --
 evalExpr ram (Symbol "list" x)      | length x == 0     = error "Invalid argument for list"
                                     | otherwise         = (ram, List [giveExpr (evalExpr ram expr) | expr <- x])
@@ -194,7 +198,7 @@ evalExpr ram (Symbol "cond" x)      | length x == 0     = error "Invalid argumen
                                         otherwise       -> error "Impossible to evaluate cond"
 --
 evalExpr ram (Symbol "lambda" x)    | length x /= 2     = error "Invalid argument for lambda"
-                                    | otherwise         = (ram, Procedure (x !! 0, x !! 1))  
+                                    | otherwise         = (ram, Procedure (x !! 0, x !! 1)) 
 --
 evalExpr ram (Symbol "define" x)    | length x /= 2     = error "Invalid argument for define"
                                     | otherwise         = (addToAccess ram mem, KeyWord $ name $ mem)
@@ -206,17 +210,21 @@ evalExpr ram (Symbol "let" x)       | length x /= 2     = error "Invalid argumen
                                             where
                                                 transformLetToLambda = Procedure (args, body)
                                                 args        = case x !! 0 of
-                                                    List z  -> List [case y of 
+                                                    List z  -> case z !! 0 of
+                                                        KeyWord a   -> List [KeyWord a]
+                                                        _           -> List [case y of 
                                                             List w -> w !! 0
                                                             _       -> error ("error to eval argument in Let: " ++ (show x))
-                                                        | y <- z]
+                                                            | y <- z]
                                                     _       -> error "Bad Argument into Let"
                                                 --
                                                 parameters  = case x !! 0 of
-                                                    List z  -> [case y of 
-                                                            List w -> w !! 1 
+                                                    List z  -> case z !! 0 of
+                                                        KeyWord a   -> [z !! 1]
+                                                        _           -> [case y of 
+                                                            List w      -> w !! 1
                                                             _      -> error "error to eval parameter in Let"
-                                                        | y <- z]
+                                                            | y <- z]
                                                     _       -> error "Bad Argument into Let"
                                                 body        = x !! 1
 --
@@ -227,11 +235,6 @@ evalExpr ram expr@(List x)         = case evalExpr ram $ head $ x of
                                                     defineArgs = [transformExprToMemory (List [(args !! i), giveExpr $ evalExpr new $ y !! i]) | i <- take (length args) [0,1..] ]
                                                     (fresh, result) = evalExpr (ram ++ defineArgs) body
     (new, KeyWord ('#':y))                -> (new, expr)
-    -- Todo: Exhaustive case
-    (new, z)                                -> (fresh, result)
-                                                    where
-                                                        y = tail x
-                                                        (fresh, result) = evalExpr new z
     _                                   -> error "Can not evaluate list"
 --
 evalExpr ram expr@(CellList x)      = case x of
